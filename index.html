@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Mise en Place</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -806,21 +806,159 @@
       text-transform: uppercase;
     }
 
-    /* ── RESPONSIVE ── */
+    /* ── GLOBAL MOBILE FOUNDATIONS ── */
+
+    /* Prevent grey tap-flash on iOS */
+    * { -webkit-tap-highlight-color: transparent; }
+
+    /* Reset iOS button chrome */
+    button { -webkit-appearance: none; }
+
+    /* Use dynamic viewport height — handles Safari's collapsing address bar */
+    #setup-screen { min-height: 100dvh; }
+    body { min-height: 100dvh; }
+
+    /* Safe-area padding for Dynamic Island / notch */
+    header { padding-top: env(safe-area-inset-top, 0px); }
+
+    /* Toast and footer clear the home indicator */
+    #toast  { bottom: calc(2rem + env(safe-area-inset-bottom, 0px)); }
+    footer  { padding-bottom: calc(1.4rem + env(safe-area-inset-bottom, 0px)); }
+
+    /* Smooth momentum scroll inside modals on iOS */
+    .modal-wrap,
+    .modal-box { -webkit-overflow-scrolling: touch; }
+
+    /* ── TABLET (≤768px) ── */
+    @media (max-width: 768px) {
+      /* Critical: prevent iOS auto-zoom when tapping any input */
+      input, textarea, select { font-size: 16px !important; }
+    }
+
+    /* ── PHONE (≤600px) ── */
     @media (max-width: 600px) {
-      main { padding: 2rem 1rem; }
-      .header-inner { padding: 1rem; }
+      /* Layout */
+      main { padding: 1.5rem 1rem; }
+      .header-inner { padding: 0.9rem 1rem; }
+
+      /* Typography scale-down */
+      .sec-title { font-size: 1.15rem; }
+      .setup-logo { font-size: 2rem; }
+
+      /* Setup */
+      .setup-card { padding: 2rem 1.25rem; }
+
+      /* Drop zone — more compact, obviously tappable */
+      #drop-zone { padding: 1.8rem 1.25rem; }
+      .drop-title { font-size: 0.97rem; }
+
+      /* Thumbnails */
+      #thumbnail-grid {
+        grid-template-columns: repeat(auto-fill, minmax(82px, 1fr));
+        gap: 0.5rem;
+      }
+      /* Bigger touch targets for remove buttons (min 44×44 Apple HIG) */
+      .thumb-remove {
+        width: 28px;
+        height: 28px;
+        font-size: 0.75rem;
+        top: 4px;
+        right: 4px;
+      }
+
+      /* Settings gear — easier to tap */
+      #settings-btn { width: 40px; height: 40px; }
+
+      /* Extract button — full width */
+      #extract-btn { width: 100%; justify-content: center; }
+
+      /* Result card */
+      .result-card { padding: 1.4rem 1.1rem; }
+
+      /* Instagram input — stacked */
+      .ig-input-wrap { flex-direction: column; }
+      .ig-input-wrap .btn-save,
+      #save-extracted-btn { width: 100%; text-align: center; justify-content: center; }
+
+      /* Manual form — stacked */
       .form-row { flex-direction: column; }
       .form-row .btn-save { width: 100%; text-align: center; justify-content: center; }
-      .ig-input-wrap { flex-direction: column; }
-      .ig-input-wrap .btn-save { width: 100%; text-align: center; }
-      .recipe-grid { grid-template-columns: 1fr 1fr; }
-      .modal-foot { flex-direction: column; align-items: stretch; }
-      .modal-foot a, .modal-foot button { text-align: center; justify-content: center; }
-      .setup-card { padding: 2rem 1.5rem; }
+
+      /* Collection grid — 2 columns */
+      .recipe-grid { grid-template-columns: 1fr 1fr; gap: 0.65rem; }
+      .recipe-card { padding: 1rem 0.9rem 0.85rem; }
+      .rc-name { font-size: 0.88rem; }
+      .rc-badges { gap: 0.3rem; }
+
+      /* ── MODAL as bottom sheet ── */
+      .modal-wrap {
+        align-items: flex-end;
+        padding: 0;
+      }
+      .modal-box {
+        max-width: 100%;
+        max-height: 92dvh;
+        border-radius: 16px 16px 0 0;
+        /* pull-handle visual */
+        padding-top: 0;
+      }
+      /* Drag handle on top of sheet */
+      .modal-box::before {
+        content: '';
+        display: block;
+        width: 36px;
+        height: 4px;
+        background: rgba(26,20,16,.18);
+        border-radius: 2px;
+        margin: 12px auto 0;
+      }
+      .modal-head {
+        padding: 1rem 1.4rem 1rem;
+        border-radius: 0;
+      }
+      .modal-head-title { font-size: 1.25rem; }
+      .modal-body { padding: 1.25rem 1.4rem; }
+      .modal-foot {
+        padding: 1rem 1.4rem calc(1rem + env(safe-area-inset-bottom, 0px));
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.6rem;
+      }
+      .modal-foot a,
+      .modal-foot button { text-align: center; justify-content: center; }
+
+      /* Modal close button — bigger tap area */
+      .modal-close-btn { width: 32px; height: 32px; top: 0.85rem; right: 0.85rem; }
+
+      /* Settings — also a bottom sheet on mobile */
+      #settings-modal .modal-wrap {
+        align-items: flex-end;
+        padding: 0;
+      }
+      .settings-box {
+        max-width: 100%;
+        border-radius: 16px 16px 0 0;
+      }
+      .settings-box::before {
+        content: '';
+        display: block;
+        width: 36px;
+        height: 4px;
+        background: rgba(26,20,16,.18);
+        border-radius: 2px;
+        margin: 12px auto 0;
+      }
+      .settings-head { border-radius: 0; padding-top: 0.85rem; }
+      .settings-body {
+        padding-bottom: calc(2rem + env(safe-area-inset-bottom, 0px));
+      }
     }
-    @media (max-width: 400px) {
+
+    /* ── SMALL PHONE (≤390px) ── */
+    @media (max-width: 390px) {
       .recipe-grid { grid-template-columns: 1fr; }
+      main { padding: 1.25rem 0.85rem; }
+      .modal-head-title { font-size: 1.15rem; }
     }
   </style>
 </head>
@@ -1011,6 +1149,17 @@ function init() {
   }
   renderCollection();
   bindAll();
+  adaptForMobile();
+}
+
+function adaptForMobile() {
+  const touch = navigator.maxTouchPoints > 0;
+  if (touch) {
+    const title = document.querySelector('.drop-title');
+    const hint  = document.querySelector('.drop-hint');
+    if (title) title.textContent = 'Tap to choose screenshots';
+    if (hint)  hint.textContent  = 'Multiple photos supported';
+  }
 }
 
 function showSetup() {
