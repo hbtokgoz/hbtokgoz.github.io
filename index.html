@@ -1,0 +1,1466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mise en Place</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Lora:ital,wght@0,400;0,500;1,400&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --cream:      #f5f0e8;
+      --cream-dark: #ede8de;
+      --rust:       #c4622d;
+      --rust-dark:  #9e4e24;
+      --rust-light: #e8a07a;
+      --ink:        #1a1410;
+      --ink-mid:    #3d342c;
+      --ink-light:  #7a6a5e;
+      --sage:       #6b7c5e;
+      --sage-light: #8fa07f;
+    }
+
+    /* ── GLOBAL ── */
+    body {
+      font-family: 'Lora', Georgia, serif;
+      background-color: var(--cream);
+      background-image:
+        linear-gradient(rgba(26,20,16,.045) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(26,20,16,.045) 1px, transparent 1px);
+      background-size: 44px 44px;
+      color: var(--ink);
+      min-height: 100vh;
+    }
+    .hidden { display: none !important; }
+
+    /* ── SETUP SCREEN ── */
+    #setup-screen {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 2rem;
+    }
+    .setup-card {
+      background: white;
+      border: 1px solid rgba(26,20,16,.1);
+      border-top: 4px solid var(--rust);
+      padding: 3rem 2.5rem 2.5rem;
+      max-width: 460px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 6px 32px rgba(26,20,16,.08);
+    }
+    .setup-logo {
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+      font-size: 2.6rem;
+      font-weight: 700;
+      color: var(--rust);
+      letter-spacing: -.03em;
+      line-height: 1;
+    }
+    .setup-sub {
+      font-family: 'DM Mono', monospace;
+      font-size: .62rem;
+      letter-spacing: .22em;
+      text-transform: uppercase;
+      color: var(--sage);
+      margin: .4rem 0 2rem;
+    }
+    .setup-card p {
+      font-size: .93rem;
+      color: var(--ink-mid);
+      line-height: 1.75;
+      margin-bottom: 1.75rem;
+    }
+    .field-label {
+      font-family: 'DM Mono', monospace;
+      font-size: .62rem;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+      color: var(--sage);
+      display: block;
+      text-align: left;
+      margin-bottom: .45rem;
+    }
+    .text-input {
+      width: 100%;
+      padding: .82rem 1rem;
+      border: 1px solid rgba(26,20,16,.18);
+      background: var(--cream);
+      font-family: 'DM Mono', monospace;
+      font-size: .82rem;
+      color: var(--ink);
+      outline: none;
+      border-radius: 1px;
+      transition: border-color .2s;
+      margin-bottom: 1rem;
+    }
+    .text-input:focus { border-color: var(--rust); }
+    .btn-primary {
+      display: block;
+      width: 100%;
+      padding: .9rem;
+      background: var(--rust);
+      color: white;
+      border: none;
+      font-family: 'DM Mono', monospace;
+      font-size: .72rem;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      cursor: pointer;
+      border-radius: 1px;
+      transition: background .2s;
+      margin-bottom: 1.5rem;
+    }
+    .btn-primary:hover:not(:disabled) { background: var(--rust-dark); }
+    .btn-primary:disabled { opacity: .55; cursor: not-allowed; }
+    .setup-help {
+      font-family: 'DM Mono', monospace;
+      font-size: .68rem;
+      color: var(--ink-light);
+    }
+    .setup-help a { color: var(--rust); text-decoration: none; }
+    .setup-help a:hover { text-decoration: underline; }
+
+    /* ── LAYOUT ── */
+    #main-app { min-height: 100vh; display: flex; flex-direction: column; }
+
+    /* ── HEADER ── */
+    header {
+      background: var(--ink);
+      border-bottom: 3px solid var(--rust);
+      position: sticky;
+      top: 0;
+      z-index: 200;
+    }
+    .header-inner {
+      max-width: 880px;
+      margin: 0 auto;
+      padding: 1.2rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .brand h1 {
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+      font-size: 1.55rem;
+      font-weight: 700;
+      color: var(--cream);
+      letter-spacing: -.02em;
+    }
+    .brand-tag {
+      font-family: 'DM Mono', monospace;
+      font-size: .58rem;
+      letter-spacing: .22em;
+      text-transform: uppercase;
+      color: var(--rust-light);
+      margin-top: .1rem;
+    }
+    #settings-btn {
+      background: none;
+      border: 1px solid rgba(245,240,232,.22);
+      color: var(--cream);
+      width: 34px; height: 34px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: .95rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background .2s, border-color .2s;
+      flex-shrink: 0;
+    }
+    #settings-btn:hover {
+      background: rgba(245,240,232,.12);
+      border-color: rgba(245,240,232,.44);
+    }
+
+    /* ── MAIN ── */
+    main {
+      max-width: 880px;
+      margin: 0 auto;
+      padding: 3rem 2rem;
+      flex: 1;
+      width: 100%;
+    }
+
+    /* ── SECTION HEADINGS ── */
+    .sec-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.35rem;
+      font-weight: 600;
+      color: var(--ink);
+      margin-bottom: .3rem;
+    }
+    .sec-meta {
+      font-family: 'DM Mono', monospace;
+      font-size: .62rem;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+      color: var(--sage);
+      margin-bottom: 1.4rem;
+    }
+
+    /* ── UPLOAD ── */
+    .extract-section { margin-bottom: 3rem; }
+    #drop-zone {
+      border: 2px dashed rgba(26,20,16,.18);
+      background: white;
+      padding: 2.8rem 2rem;
+      text-align: center;
+      cursor: pointer;
+      border-radius: 2px;
+      transition: border-color .2s, background .2s;
+    }
+    #drop-zone:hover,
+    #drop-zone.drag-over { border-color: var(--rust); background: #fdf9f5; }
+    #drop-zone input[type="file"] { display: none; }
+    .drop-icon { font-size: 1.9rem; opacity: .45; margin-bottom: .65rem; }
+    .drop-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.05rem;
+      color: var(--ink);
+      margin-bottom: .3rem;
+    }
+    .drop-hint {
+      font-family: 'DM Mono', monospace;
+      font-size: .68rem;
+      color: var(--ink-light);
+    }
+
+    /* ── THUMBNAILS ── */
+    .thumb-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 1.1rem 0 .6rem;
+    }
+    .thumb-bar-label {
+      font-family: 'DM Mono', monospace;
+      font-size: .62rem;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: var(--sage);
+    }
+    .btn-clear-all {
+      background: none;
+      border: none;
+      font-family: 'DM Mono', monospace;
+      font-size: .62rem;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--ink-light);
+      cursor: pointer;
+      transition: color .2s;
+    }
+    .btn-clear-all:hover { color: var(--rust); }
+    #thumbnail-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+      gap: .65rem;
+    }
+    .thumb-item {
+      position: relative;
+      aspect-ratio: 1;
+      border-radius: 2px;
+      overflow: hidden;
+      background: var(--cream-dark);
+    }
+    .thumb-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .thumb-badge {
+      position: absolute;
+      top: 5px; left: 5px;
+      background: var(--ink);
+      color: white;
+      font-family: 'DM Mono', monospace;
+      font-size: .58rem;
+      width: 19px; height: 19px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .thumb-remove {
+      position: absolute;
+      top: 5px; right: 5px;
+      background: var(--rust);
+      color: white;
+      border: none;
+      width: 21px; height: 21px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: .7rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background .2s;
+    }
+    .thumb-remove:hover { background: var(--rust-dark); }
+
+    /* ── EXTRACT BUTTON ── */
+    #extract-btn {
+      margin-top: 1.2rem;
+      background: var(--rust);
+      color: white;
+      border: none;
+      padding: .88rem 2rem;
+      font-family: 'DM Mono', monospace;
+      font-size: .72rem;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      cursor: pointer;
+      border-radius: 1px;
+      transition: background .2s;
+      display: inline-flex;
+      align-items: center;
+      gap: .5rem;
+    }
+    #extract-btn:hover:not(:disabled) { background: var(--rust-dark); }
+    #extract-btn:disabled { opacity: .55; cursor: not-allowed; }
+
+    /* ── LOADING ── */
+    #loading {
+      margin-top: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+    }
+    .dots { display: flex; gap: .28rem; }
+    .dots span {
+      width: 7px; height: 7px;
+      background: var(--rust);
+      border-radius: 50%;
+      animation: bounce 1.1s infinite;
+    }
+    .dots span:nth-child(2) { animation-delay: .18s; }
+    .dots span:nth-child(3) { animation-delay: .36s; }
+    @keyframes bounce {
+      0%,60%,100% { transform: translateY(0); }
+      30% { transform: translateY(-7px); }
+    }
+    .loading-text {
+      font-family: 'DM Mono', monospace;
+      font-size: .68rem;
+      letter-spacing: .1em;
+      color: var(--sage);
+    }
+
+    /* ── RESULTS ── */
+    #results { margin-top: 2rem; animation: fadeUp .4s ease-out; }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .result-card {
+      background: white;
+      border: 1px solid rgba(26,20,16,.1);
+      box-shadow: 0 2px 14px rgba(26,20,16,.06);
+      padding: 2rem;
+      border-radius: 2px;
+    }
+    .result-label {
+      font-family: 'DM Mono', monospace;
+      font-size: .6rem;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+      color: var(--sage);
+      margin-bottom: .45rem;
+    }
+    #result-name {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--ink);
+      border: none;
+      border-bottom: 2px solid transparent;
+      background: transparent;
+      width: 100%;
+      outline: none;
+      padding-bottom: .25rem;
+      transition: border-color .2s;
+      line-height: 1.3;
+    }
+    #result-name:focus { border-bottom-color: var(--rust); }
+    .result-rule {
+      border: none;
+      border-top: 1px solid rgba(26,20,16,.08);
+      margin: 1.4rem 0;
+    }
+    .ing-list { list-style: none; }
+    .ing-list li {
+      padding: .48rem 0;
+      font-size: .93rem;
+      line-height: 1.6;
+      display: flex;
+      align-items: baseline;
+      gap: .6rem;
+      border-bottom: 1px solid rgba(26,20,16,.05);
+    }
+    .ing-list li:last-child { border-bottom: none; }
+    .ing-amt {
+      font-family: 'DM Mono', monospace;
+      font-size: .78rem;
+      color: var(--rust);
+      min-width: 80px;
+      flex-shrink: 0;
+    }
+
+    /* Instagram row inside result-card */
+    .ig-row {
+      margin-top: 1.4rem;
+      padding-top: 1.4rem;
+      border-top: 1px solid rgba(26,20,16,.08);
+    }
+    .ig-input-wrap {
+      display: flex;
+      gap: .7rem;
+      margin-top: .45rem;
+    }
+    .ig-input-wrap input {
+      flex: 1;
+      padding: .75rem 1rem;
+      border: 1px solid rgba(26,20,16,.15);
+      background: var(--cream);
+      font-family: 'DM Mono', monospace;
+      font-size: .78rem;
+      color: var(--ink);
+      border-radius: 1px;
+      outline: none;
+      transition: border-color .2s;
+    }
+    .ig-input-wrap input:focus { border-color: var(--rust); }
+    .btn-save {
+      background: var(--ink);
+      color: var(--cream);
+      border: none;
+      padding: .75rem 1.4rem;
+      font-family: 'DM Mono', monospace;
+      font-size: .68rem;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      cursor: pointer;
+      border-radius: 1px;
+      white-space: nowrap;
+      transition: background .2s;
+    }
+    .btn-save:hover { background: var(--rust); }
+
+    /* ── DIVIDER ── */
+    .section-divider {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin: 3rem 0;
+    }
+    .section-divider::before,
+    .section-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: rgba(26,20,16,.14);
+    }
+    .section-divider span {
+      font-family: 'DM Mono', monospace;
+      font-size: .62rem;
+      letter-spacing: .2em;
+      color: var(--sage);
+      text-transform: uppercase;
+    }
+
+    /* ── MANUAL ADD ── */
+    .manual-section { margin-bottom: 3rem; }
+    .manual-card {
+      background: white;
+      border: 1px solid rgba(26,20,16,.1);
+      padding: 1.4rem 1.5rem;
+      border-radius: 2px;
+    }
+    .form-row {
+      display: flex;
+      gap: .7rem;
+      align-items: flex-end;
+    }
+    .form-field { flex: 1; }
+    .form-field label {
+      font-family: 'DM Mono', monospace;
+      font-size: .6rem;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+      color: var(--sage);
+      display: block;
+      margin-bottom: .45rem;
+    }
+    .form-field input {
+      width: 100%;
+      padding: .75rem 1rem;
+      border: 1px solid rgba(26,20,16,.15);
+      background: var(--cream);
+      font-family: 'Lora', serif;
+      font-size: .9rem;
+      color: var(--ink);
+      border-radius: 1px;
+      outline: none;
+      transition: border-color .2s;
+    }
+    .form-field input:focus { border-color: var(--rust); }
+
+    /* ── COLLECTION ── */
+    .collection-section { margin-bottom: 3rem; }
+    .coll-header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      margin-bottom: 1.4rem;
+    }
+    .coll-count {
+      font-family: 'DM Mono', monospace;
+      font-size: .62rem;
+      letter-spacing: .1em;
+      color: var(--sage);
+      padding-bottom: .1rem;
+    }
+    .recipe-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+      gap: 1rem;
+    }
+    .recipe-card {
+      background: white;
+      border: 1px solid rgba(26,20,16,.1);
+      padding: 1.4rem 1.4rem 1.2rem;
+      cursor: pointer;
+      border-radius: 2px;
+      transition: border-color .2s, box-shadow .2s, transform .15s;
+      position: relative;
+      overflow: hidden;
+      animation: fadeUp .35s ease-out;
+    }
+    .recipe-card:hover {
+      border-color: var(--rust);
+      box-shadow: 0 4px 18px rgba(26,20,16,.1);
+      transform: translateY(-2px);
+    }
+    .rc-corner {
+      position: absolute;
+      top: 0; right: 0;
+      width: 0; height: 0;
+      border-style: solid;
+      border-width: 0 22px 22px 0;
+      border-color: transparent var(--rust) transparent transparent;
+      opacity: 0;
+      transition: opacity .2s;
+    }
+    .recipe-card:hover .rc-corner { opacity: .55; }
+    .rc-name {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.02rem;
+      font-weight: 600;
+      color: var(--ink);
+      line-height: 1.35;
+      margin-bottom: .65rem;
+    }
+    .rc-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .4rem;
+      margin-bottom: .5rem;
+    }
+    .rc-badge {
+      font-family: 'DM Mono', monospace;
+      font-size: .58rem;
+      letter-spacing: .08em;
+      padding: .18rem .5rem;
+      border-radius: 1px;
+    }
+    .rc-badge-ing {
+      background: var(--cream-dark);
+      color: var(--sage);
+    }
+    .rc-badge-ig {
+      background: rgba(196,98,45,.1);
+      color: var(--rust);
+    }
+    .rc-date {
+      font-family: 'DM Mono', monospace;
+      font-size: .58rem;
+      color: rgba(26,20,16,.3);
+    }
+    .empty-coll {
+      grid-column: 1/-1;
+      text-align: center;
+      padding: 3.5rem;
+    }
+    .empty-coll p {
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+      font-size: 1rem;
+      color: rgba(26,20,16,.3);
+    }
+
+    /* ── MODAL BASE ── */
+    .modal-wrap {
+      position: fixed;
+      inset: 0;
+      background: rgba(26,20,16,.52);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 1rem;
+      animation: fadeIn .2s ease;
+    }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .modal-box {
+      background: var(--cream);
+      border: 1px solid rgba(26,20,16,.14);
+      border-radius: 2px;
+      width: 100%;
+      max-width: 540px;
+      max-height: 88vh;
+      overflow-y: auto;
+      animation: slideUp .25s ease;
+      position: relative;
+    }
+    .modal-head {
+      background: var(--ink);
+      color: var(--cream);
+      padding: 1.5rem 2rem 1.4rem;
+      position: relative;
+    }
+    .modal-head-tag {
+      font-family: 'DM Mono', monospace;
+      font-size: .58rem;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+      color: var(--rust-light);
+      margin-bottom: .35rem;
+    }
+    .modal-head-title {
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+      font-size: 1.45rem;
+      font-weight: 700;
+      line-height: 1.3;
+      padding-right: 2rem;
+    }
+    .modal-head-date {
+      font-family: 'DM Mono', monospace;
+      font-size: .58rem;
+      color: rgba(245,240,232,.38);
+      margin-top: .3rem;
+      letter-spacing: .08em;
+    }
+    .modal-close-btn {
+      position: absolute;
+      top: 1rem; right: 1rem;
+      background: none;
+      border: 1px solid rgba(245,240,232,.28);
+      color: var(--cream);
+      width: 26px; height: 26px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: .8rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background .2s;
+    }
+    .modal-close-btn:hover { background: rgba(245,240,232,.15); }
+    .modal-body { padding: 1.8rem 2rem; }
+    .modal-body-label {
+      font-family: 'DM Mono', monospace;
+      font-size: .6rem;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      color: var(--sage);
+      margin-bottom: .9rem;
+    }
+    .modal-ing-list { list-style: none; margin-bottom: 1rem; }
+    .modal-ing-list li {
+      padding: .48rem 0;
+      font-size: .93rem;
+      display: flex;
+      gap: .75rem;
+      border-bottom: 1px solid rgba(26,20,16,.06);
+      line-height: 1.55;
+    }
+    .modal-ing-list li:last-child { border-bottom: none; }
+    .modal-amt {
+      font-family: 'DM Mono', monospace;
+      font-size: .78rem;
+      color: var(--rust);
+      min-width: 88px;
+      flex-shrink: 0;
+    }
+    .modal-no-ing {
+      font-style: italic;
+      color: rgba(26,20,16,.38);
+      font-size: .9rem;
+      margin-bottom: 1rem;
+    }
+    .modal-foot {
+      padding: 1.25rem 2rem 1.5rem;
+      border-top: 1px solid rgba(26,20,16,.09);
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: .75rem;
+      flex-wrap: wrap;
+    }
+    .btn-del {
+      background: none;
+      border: 1px solid rgba(26,20,16,.2);
+      color: var(--ink-light);
+      padding: .65rem 1rem;
+      font-family: 'DM Mono', monospace;
+      font-size: .65rem;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      cursor: pointer;
+      border-radius: 1px;
+      transition: all .2s;
+    }
+    .btn-del:hover { border-color: #c0392b; color: #c0392b; }
+    .btn-ig {
+      background: var(--rust);
+      color: white;
+      text-decoration: none;
+      padding: .7rem 1.2rem;
+      font-family: 'DM Mono', monospace;
+      font-size: .68rem;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      border-radius: 1px;
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem;
+      transition: background .2s;
+    }
+    .btn-ig:hover { background: var(--rust-dark); }
+
+    /* ── SETTINGS MODAL ── */
+    .settings-box {
+      background: var(--cream);
+      border: 1px solid rgba(26,20,16,.14);
+      border-radius: 2px;
+      width: 100%;
+      max-width: 400px;
+      animation: slideUp .25s ease;
+    }
+    .settings-head {
+      background: var(--ink);
+      color: var(--cream);
+      padding: 1.25rem 2rem;
+      position: relative;
+    }
+    .settings-head h2 {
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+      font-size: 1.2rem;
+    }
+    .settings-body { padding: 1.5rem 2rem 2rem; }
+
+    /* ── TOAST ── */
+    #toast {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(16px);
+      background: var(--ink);
+      color: var(--cream);
+      padding: .7rem 1.4rem;
+      border-radius: 2px;
+      font-family: 'DM Mono', monospace;
+      font-size: .72rem;
+      letter-spacing: .08em;
+      z-index: 3000;
+      opacity: 0;
+      transition: opacity .28s ease, transform .28s ease;
+      pointer-events: none;
+      border-left: 3px solid var(--rust);
+      white-space: nowrap;
+    }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* ── FOOTER ── */
+    footer {
+      border-top: 1px solid rgba(26,20,16,.1);
+      padding: 1.4rem 2rem;
+      text-align: center;
+    }
+    footer p {
+      font-family: 'DM Mono', monospace;
+      font-size: .58rem;
+      letter-spacing: .12em;
+      color: rgba(26,20,16,.28);
+      text-transform: uppercase;
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 600px) {
+      main { padding: 2rem 1rem; }
+      .header-inner { padding: 1rem; }
+      .form-row { flex-direction: column; }
+      .form-row .btn-save { width: 100%; text-align: center; justify-content: center; }
+      .ig-input-wrap { flex-direction: column; }
+      .ig-input-wrap .btn-save { width: 100%; text-align: center; }
+      .recipe-grid { grid-template-columns: 1fr 1fr; }
+      .modal-foot { flex-direction: column; align-items: stretch; }
+      .modal-foot a, .modal-foot button { text-align: center; justify-content: center; }
+      .setup-card { padding: 2rem 1.5rem; }
+    }
+    @media (max-width: 400px) {
+      .recipe-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ===== SETUP SCREEN ===== -->
+<div id="setup-screen">
+  <div class="setup-card">
+    <div class="setup-logo">Mise en Place</div>
+    <div class="setup-sub">Recipe Journal</div>
+    <p>To extract recipes from Instagram screenshots, you'll need an Anthropic API key. Your key is stored locally and never leaves your browser.</p>
+    <label class="field-label" for="setup-key-input">Anthropic API Key</label>
+    <input class="text-input" type="password" id="setup-key-input" placeholder="sk-ant-…" autocomplete="off">
+    <button class="btn-primary" id="setup-save-btn">Begin</button>
+    <p class="setup-help">Get your key at <a href="https://console.anthropic.com" target="_blank" rel="noopener">console.anthropic.com</a></p>
+  </div>
+</div>
+
+<!-- ===== MAIN APP ===== -->
+<div id="main-app" class="hidden">
+  <header>
+    <div class="header-inner">
+      <div class="brand">
+        <h1>Mise en Place</h1>
+        <div class="brand-tag">Recipe Journal</div>
+      </div>
+      <button id="settings-btn" title="Settings">⚙</button>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- EXTRACT SECTION -->
+    <div class="extract-section">
+      <div class="sec-title">Extract a Recipe</div>
+      <div class="sec-meta">Upload Instagram screenshots</div>
+
+      <div id="drop-zone">
+        <input type="file" id="file-input" accept="image/*" multiple>
+        <div class="drop-icon">📷</div>
+        <div class="drop-title">Drop screenshots here</div>
+        <div class="drop-hint">or click to browse &nbsp;·&nbsp; multiple files supported</div>
+      </div>
+
+      <div id="thumb-section" class="hidden">
+        <div class="thumb-bar">
+          <span class="thumb-bar-label" id="thumb-count-label"></span>
+          <button class="btn-clear-all" id="clear-all-btn">Clear all</button>
+        </div>
+        <div id="thumbnail-grid"></div>
+      </div>
+
+      <button id="extract-btn" class="hidden">✦&ensp;Extract Recipe</button>
+
+      <div id="loading" class="hidden">
+        <div class="dots"><span></span><span></span><span></span></div>
+        <div class="loading-text">Reading the recipe…</div>
+      </div>
+
+      <div id="results" class="hidden">
+        <div class="result-card">
+          <div class="result-label">Recipe Name</div>
+          <input type="text" id="result-name" class="text-input" style="background:transparent;border-color:transparent;padding-left:0;font-family:'Playfair Display',serif;font-style:italic;font-size:1.55rem;font-weight:700;margin-bottom:0;border-bottom:2px solid transparent;" placeholder="Recipe name">
+          <hr class="result-rule">
+          <div class="result-label" style="margin-bottom:.75rem">Ingredients</div>
+          <ul class="ing-list" id="result-ingredients"></ul>
+          <div class="ig-row">
+            <label class="field-label" for="result-ig-link">Instagram Link <span style="opacity:.45;text-transform:none;letter-spacing:0;font-size:.75rem">(optional)</span></label>
+            <div class="ig-input-wrap">
+              <input type="url" id="result-ig-link" placeholder="https://www.instagram.com/p/…">
+              <button class="btn-save" id="save-extracted-btn">Save to Collection</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DIVIDER -->
+    <div class="section-divider"><span>or add manually</span></div>
+
+    <!-- MANUAL ADD -->
+    <div class="manual-section">
+      <div class="sec-title">Add Manually</div>
+      <div class="sec-meta">Name &amp; link only — no screenshot needed</div>
+      <div class="manual-card">
+        <div class="form-row">
+          <div class="form-field">
+            <label for="manual-name">Recipe Name</label>
+            <input type="text" id="manual-name" placeholder="e.g. Chocolate Fondant">
+          </div>
+          <div class="form-field">
+            <label for="manual-link">Instagram Link <span style="opacity:.5;font-size:.75em">(optional)</span></label>
+            <input type="url" id="manual-link" placeholder="https://instagram.com/p/…">
+          </div>
+          <button class="btn-save" id="manual-save-btn">Add</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- COLLECTION -->
+    <div class="collection-section">
+      <div class="coll-header">
+        <div>
+          <div class="sec-title">My Collection</div>
+          <div class="sec-meta">Saved recipes</div>
+        </div>
+        <div class="coll-count" id="coll-count"></div>
+      </div>
+      <div class="recipe-grid" id="recipe-grid">
+        <div class="empty-coll"><p>Your collection is empty — save your first recipe above.</p></div>
+      </div>
+    </div>
+
+  </main>
+
+  <footer>
+    <p>Mise en Place &mdash; Personal Recipe Journal</p>
+  </footer>
+</div>
+
+<!-- ===== RECIPE MODAL ===== -->
+<div id="recipe-modal" class="hidden">
+  <div class="modal-wrap" id="recipe-modal-wrap">
+    <div class="modal-box">
+      <div class="modal-head">
+        <div class="modal-head-tag">Recipe</div>
+        <div class="modal-head-title" id="modal-name"></div>
+        <div class="modal-head-date" id="modal-date"></div>
+        <button class="modal-close-btn" id="recipe-modal-close">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-body-label" id="modal-ing-label">Ingredients</div>
+        <ul class="modal-ing-list" id="modal-ing-list"></ul>
+        <p class="modal-no-ing hidden" id="modal-no-ing">No ingredients recorded.</p>
+      </div>
+      <div class="modal-foot">
+        <button class="btn-del" id="modal-del-btn">Delete Recipe</button>
+        <a href="#" class="btn-ig hidden" id="modal-ig-btn" target="_blank" rel="noopener">▶&ensp;Watch on Instagram</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SETTINGS MODAL ===== -->
+<div id="settings-modal" class="hidden">
+  <div class="modal-wrap" id="settings-modal-wrap">
+    <div class="settings-box">
+      <div class="settings-head">
+        <h2>Settings</h2>
+        <button class="modal-close-btn" id="settings-modal-close">✕</button>
+      </div>
+      <div class="settings-body">
+        <label class="field-label" for="settings-key-input">Anthropic API Key</label>
+        <input class="text-input" type="password" id="settings-key-input" placeholder="sk-ant-…" autocomplete="off">
+        <button class="btn-primary" id="update-key-btn">Update Key</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TOAST ===== -->
+<div id="toast"></div>
+
+<script>
+// ==============================================
+// MISE EN PLACE — Recipe Journal
+// ==============================================
+
+const LS_KEY     = 'mise-api-key';
+const LS_RECIPES = 'mise-recipes';
+const API_URL    = 'https://api.anthropic.com/v1/messages';
+const MODEL      = 'claude-sonnet-4-20250514';
+
+// ---------- state ----------
+let uploadedImages    = [];   // [{dataUrl, type}]
+let currentRecipe     = null; // {name, ingredients}
+let currentModalId    = null;
+let toastTimer        = null;
+
+// ==============================================
+// BOOT
+// ==============================================
+function init() {
+  if (localStorage.getItem(LS_KEY)) {
+    showApp();
+  } else {
+    showSetup();
+  }
+  renderCollection();
+  bindAll();
+}
+
+function showSetup() {
+  el('setup-screen').classList.remove('hidden');
+  el('main-app').classList.add('hidden');
+}
+function showApp() {
+  el('setup-screen').classList.add('hidden');
+  el('main-app').classList.remove('hidden');
+}
+
+// ==============================================
+// BIND
+// ==============================================
+function bindAll() {
+  // Setup
+  el('setup-save-btn').addEventListener('click', onSetupSave);
+  el('setup-key-input').addEventListener('keydown', e => { if (e.key === 'Enter') onSetupSave(); });
+
+  // Settings
+  el('settings-btn').addEventListener('click', openSettings);
+  el('settings-modal-close').addEventListener('click', closeSettings);
+  el('settings-modal-wrap').addEventListener('click', e => { if (e.target === e.currentTarget) closeSettings(); });
+  el('update-key-btn').addEventListener('click', onUpdateKey);
+
+  // Upload
+  const dz = el('drop-zone');
+  dz.addEventListener('click', () => el('file-input').click());
+  el('file-input').addEventListener('change', e => handleFiles(e.target.files));
+  dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over'); });
+  dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
+  dz.addEventListener('drop', e => {
+    e.preventDefault();
+    dz.classList.remove('drag-over');
+    handleFiles(e.dataTransfer.files);
+  });
+
+  el('clear-all-btn').addEventListener('click', clearAllImages);
+  el('extract-btn').addEventListener('click', onExtract);
+  el('save-extracted-btn').addEventListener('click', onSaveExtracted);
+
+  // Manual
+  el('manual-save-btn').addEventListener('click', onManualSave);
+  el('manual-name').addEventListener('keydown', e => { if (e.key === 'Enter') onManualSave(); });
+
+  // Recipe modal
+  el('recipe-modal-close').addEventListener('click', closeRecipeModal);
+  el('recipe-modal-wrap').addEventListener('click', e => { if (e.target === e.currentTarget) closeRecipeModal(); });
+  el('modal-del-btn').addEventListener('click', onDeleteRecipe);
+
+  // Escape
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { closeRecipeModal(); closeSettings(); }
+  });
+}
+
+// ==============================================
+// SETUP / SETTINGS
+// ==============================================
+function onSetupSave() {
+  const key = el('setup-key-input').value.trim();
+  if (!key) { toast('Please enter your API key'); return; }
+  localStorage.setItem(LS_KEY, key);
+  showApp();
+  toast('Welcome to Mise en Place ✦');
+}
+
+function openSettings() {
+  el('settings-key-input').value = localStorage.getItem(LS_KEY) || '';
+  el('settings-modal').classList.remove('hidden');
+}
+function closeSettings() {
+  el('settings-modal').classList.add('hidden');
+}
+function onUpdateKey() {
+  const key = el('settings-key-input').value.trim();
+  if (!key) { toast('Please enter an API key'); return; }
+  localStorage.setItem(LS_KEY, key);
+  closeSettings();
+  toast('API key updated');
+}
+
+// ==============================================
+// UPLOAD / THUMBNAILS
+// ==============================================
+function handleFiles(fileList) {
+  const imgs = Array.from(fileList).filter(f => f.type.startsWith('image/'));
+  if (!imgs.length) { toast('Please select image files'); return; }
+  if (uploadedImages.length + imgs.length > 10) {
+    toast('Maximum 10 images at a time');
+    return;
+  }
+
+  const reads = imgs.map(f => new Promise(res => {
+    const r = new FileReader();
+    r.onload = e => res({ dataUrl: e.target.result, type: f.type || 'image/jpeg' });
+    r.readAsDataURL(f);
+  }));
+
+  Promise.all(reads).then(results => {
+    uploadedImages.push(...results);
+    renderThumbs();
+    el('extract-btn').classList.remove('hidden');
+    el('file-input').value = '';
+  });
+}
+
+function renderThumbs() {
+  if (!uploadedImages.length) {
+    el('thumb-section').classList.add('hidden');
+    el('extract-btn').classList.add('hidden');
+    return;
+  }
+  el('thumb-section').classList.remove('hidden');
+  el('thumb-count-label').textContent =
+    uploadedImages.length + ' image' + (uploadedImages.length !== 1 ? 's' : '');
+
+  el('thumbnail-grid').innerHTML = uploadedImages.map((img, i) => `
+    <div class="thumb-item">
+      <img src="${img.dataUrl}" alt="">
+      <div class="thumb-badge">${i + 1}</div>
+      <button class="thumb-remove" data-idx="${i}" title="Remove">✕</button>
+    </div>
+  `).join('');
+
+  el('thumbnail-grid').querySelectorAll('.thumb-remove').forEach(btn => {
+    btn.addEventListener('click', () => removeImage(+btn.dataset.idx));
+  });
+}
+
+function removeImage(idx) {
+  uploadedImages.splice(idx, 1);
+  renderThumbs();
+  if (!uploadedImages.length) el('results').classList.add('hidden');
+}
+
+function clearAllImages() {
+  uploadedImages = [];
+  currentRecipe = null;
+  renderThumbs();
+  el('results').classList.add('hidden');
+}
+
+// ==============================================
+// EXTRACT
+// ==============================================
+async function onExtract() {
+  if (!uploadedImages.length) return;
+  const apiKey = localStorage.getItem(LS_KEY);
+  if (!apiKey) { toast('No API key — check Settings'); return; }
+
+  el('extract-btn').disabled = true;
+  el('loading').classList.remove('hidden');
+  el('results').classList.add('hidden');
+
+  try {
+    const recipe = await callClaude(apiKey, uploadedImages);
+    currentRecipe = recipe;
+    showResults(recipe);
+  } catch (err) {
+    console.error(err);
+    toast('Extraction failed — ' + (err.message || 'Unknown error'));
+  } finally {
+    el('extract-btn').disabled = false;
+    el('loading').classList.add('hidden');
+  }
+}
+
+async function callClaude(apiKey, images) {
+  const content = [
+    ...images.map(img => ({
+      type: 'image',
+      source: {
+        type: 'base64',
+        media_type: img.type,
+        data: img.dataUrl.split(',')[1]
+      }
+    })),
+    {
+      type: 'text',
+      text: `You are a recipe extraction assistant. Examine these Instagram screenshots and extract the recipe.
+
+Return ONLY a valid JSON object — no markdown, no explanation, no code fences. Use this exact structure:
+{
+  "name": "Recipe name in its original language",
+  "ingredients": [
+    "quantity unit ingredient",
+    "quantity unit ingredient"
+  ]
+}
+
+Rules:
+- Preserve the original language exactly. If the recipe is in Turkish, keep it in Turkish. If in Italian, keep Italian. Do NOT translate anything.
+- Each element in "ingredients" is a single string combining quantity + unit + ingredient name (e.g. "2 cups flour", "1 tsp tuz", "3 yumurta").
+- If no quantity is visible, just write the ingredient name.
+- If multiple recipes appear, extract the most prominent one.
+- If no recipe is found at all, return: {"name":"Unknown Recipe","ingredients":[]}
+- Return ONLY the raw JSON object.`
+    }
+  ];
+
+  const res = await fetch(API_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({
+      model: MODEL,
+      max_tokens: 1500,
+      messages: [{ role: 'user', content }]
+    })
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error?.message || `API error ${res.status}`);
+  }
+
+  const data = await res.json();
+  const text = data.content?.[0]?.text || '';
+
+  // Extract JSON from response (handles any extra text)
+  const match = text.match(/\{[\s\S]*\}/);
+  if (!match) throw new Error('No JSON found in response');
+
+  let recipe;
+  try { recipe = JSON.parse(match[0]); }
+  catch { throw new Error('Could not parse recipe JSON'); }
+
+  if (!recipe.name) recipe.name = 'Extracted Recipe';
+  if (!Array.isArray(recipe.ingredients)) recipe.ingredients = [];
+
+  recipe.name = toTitleCase(recipe.name);
+  return recipe;
+}
+
+function showResults(recipe) {
+  el('result-name').value = recipe.name;
+  el('result-ig-link').value = '';
+
+  const list = el('result-ingredients');
+  if (!recipe.ingredients.length) {
+    list.innerHTML = '<li style="color:rgba(26,20,16,.38);font-style:italic;border-bottom:none">No ingredients detected</li>';
+  } else {
+    list.innerHTML = recipe.ingredients.map(ing => {
+      const { amt, name } = splitIng(ing);
+      return `<li>
+        <span class="ing-amt">${esc(amt)}</span>
+        <span>${esc(name)}</span>
+      </li>`;
+    }).join('');
+  }
+
+  el('results').classList.remove('hidden');
+}
+
+// ==============================================
+// SAVE
+// ==============================================
+function onSaveExtracted() {
+  const name = el('result-name').value.trim();
+  if (!name) { toast('Please enter a recipe name'); return; }
+
+  persistRecipe({
+    name: toTitleCase(name),
+    ingredients: currentRecipe?.ingredients || [],
+    instagramLink: el('result-ig-link').value.trim() || null
+  });
+
+  // Reset upload area
+  clearAllImages();
+  el('results').classList.add('hidden');
+  toast('Recipe saved to your collection ✦');
+}
+
+function onManualSave() {
+  const name = el('manual-name').value.trim();
+  if (!name) { toast('Please enter a recipe name'); return; }
+
+  persistRecipe({
+    name: toTitleCase(name),
+    ingredients: [],
+    instagramLink: el('manual-link').value.trim() || null
+  });
+
+  el('manual-name').value = '';
+  el('manual-link').value = '';
+  toast('Recipe added to your collection');
+}
+
+function persistRecipe({ name, ingredients, instagramLink }) {
+  const all = getRecipes();
+  all.unshift({
+    id: uid(),
+    name,
+    ingredients,
+    instagramLink,
+    dateAdded: new Date().toISOString()
+  });
+  localStorage.setItem(LS_RECIPES, JSON.stringify(all));
+  renderCollection();
+}
+
+// ==============================================
+// COLLECTION
+// ==============================================
+function getRecipes() {
+  try { return JSON.parse(localStorage.getItem(LS_RECIPES)) || []; }
+  catch { return []; }
+}
+
+function renderCollection() {
+  const all = getRecipes();
+  const grid = el('recipe-grid');
+  const count = el('coll-count');
+
+  count.textContent = all.length ? all.length + ' recipe' + (all.length !== 1 ? 's' : '') : '';
+
+  if (!all.length) {
+    grid.innerHTML = '<div class="empty-coll"><p>Your collection is empty — save your first recipe above.</p></div>';
+    return;
+  }
+
+  grid.innerHTML = all.map(r => {
+    const ic = r.ingredients?.length || 0;
+    return `
+      <div class="recipe-card" data-id="${r.id}">
+        <div class="rc-corner"></div>
+        <div class="rc-name">${esc(r.name)}</div>
+        <div class="rc-badges">
+          ${ic > 0 ? `<span class="rc-badge rc-badge-ing">${ic} ingredient${ic !== 1 ? 's' : ''}</span>` : ''}
+          ${r.instagramLink ? '<span class="rc-badge rc-badge-ig">◉ Instagram</span>' : ''}
+        </div>
+        <div class="rc-date">${fmtDate(r.dateAdded)}</div>
+      </div>
+    `;
+  }).join('');
+
+  grid.querySelectorAll('.recipe-card').forEach(card => {
+    card.addEventListener('click', () => openRecipeModal(card.dataset.id));
+  });
+}
+
+// ==============================================
+// RECIPE MODAL
+// ==============================================
+function openRecipeModal(id) {
+  const recipe = getRecipes().find(r => r.id === id);
+  if (!recipe) return;
+  currentModalId = id;
+
+  el('modal-name').textContent = recipe.name;
+  el('modal-date').textContent = 'Added ' + fmtDate(recipe.dateAdded);
+
+  const list   = el('modal-ing-list');
+  const noIng  = el('modal-no-ing');
+  const label  = el('modal-ing-label');
+
+  if (recipe.ingredients?.length) {
+    list.classList.remove('hidden');
+    noIng.classList.add('hidden');
+    label.classList.remove('hidden');
+    list.innerHTML = recipe.ingredients.map(ing => {
+      const { amt, name } = splitIng(ing);
+      return `<li><span class="modal-amt">${esc(amt)}</span><span>${esc(name)}</span></li>`;
+    }).join('');
+  } else {
+    list.classList.add('hidden');
+    label.classList.add('hidden');
+    noIng.classList.remove('hidden');
+  }
+
+  const igBtn = el('modal-ig-btn');
+  if (recipe.instagramLink) {
+    igBtn.classList.remove('hidden');
+    igBtn.href = recipe.instagramLink;
+  } else {
+    igBtn.classList.add('hidden');
+  }
+
+  el('recipe-modal').classList.remove('hidden');
+}
+
+function closeRecipeModal() {
+  el('recipe-modal').classList.add('hidden');
+  currentModalId = null;
+}
+
+function onDeleteRecipe() {
+  if (!currentModalId) return;
+  const filtered = getRecipes().filter(r => r.id !== currentModalId);
+  localStorage.setItem(LS_RECIPES, JSON.stringify(filtered));
+  closeRecipeModal();
+  renderCollection();
+  toast('Recipe removed from collection');
+}
+
+// ==============================================
+// UTILITIES
+// ==============================================
+function toTitleCase(str) {
+  if (!str) return str;
+  const small = new Set(['a','an','the','and','but','or','for','nor','on','at','to','by','in','of','up','as','is','into']);
+  return str.replace(/\S+/g, (word, offset) => {
+    const lc = word.toLowerCase();
+    if (offset > 0 && small.has(lc)) return lc;
+    // Preserve characters that shouldn't be uppercased (e.g. starting chars)
+    return word.charAt(0).toUpperCase() + word.slice(1);
+  });
+}
+
+function splitIng(str) {
+  if (!str) return { amt: '', name: '' };
+  // Match leading numeric amount (e.g. "2", "1/2", "200g", "3-4", "2 cups")
+  const m = str.match(/^([\d][^\s]*(?:\s+[\d][^\s]*)*(?:\s+(?:cups?|tbsp?|tsp?|tablespoons?|teaspoons?|g|kg|ml|l|oz|lbs?|pinch|handful|cloves?|slices?|pieces?|bunches?|cans?|large|medium|small|dash|adet|su\s+barda[gğ][ıi]|[çc]ay\s+ka[şs][ıi][gğ][ıi]|yemek\s+ka[şs][ıi][gğ][ıi]))?)\s+(.*)/i);
+  if (m) return { amt: m[1].trim(), name: m[2].trim() };
+  return { amt: '', name: str };
+}
+
+function uid() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+}
+
+function fmtDate(iso) {
+  if (!iso) return '';
+  return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function esc(s) {
+  if (!s) return '';
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function el(id) { return document.getElementById(id); }
+
+function toast(msg) {
+  const t = el('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ==============================================
+// START
+// ==============================================
+init();
+</script>
+</body>
+</html>
