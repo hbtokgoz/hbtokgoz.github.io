@@ -1200,9 +1200,10 @@ async function init() {
   }
 
   sb.auth.onAuthStateChange(async (event, session) => {
-    if (event === 'SIGNED_IN' && session?.user) {
+    if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session?.user) {
+      const isNewUser = !currentUser || currentUser.id !== session.user.id;
       currentUser = session.user;
-      await afterAuth();
+      if (isNewUser) await afterAuth();
     } else if (event === 'SIGNED_OUT') {
       currentUser = null;
       recipesCache = [];
@@ -1575,15 +1576,19 @@ async function onSaveExtracted() {
   const name = el('result-name').value.trim();
   if (!name) { toast('Please enter a recipe name'); return; }
 
-  await persistRecipe({
-    name: toTitleCase(name),
-    ingredients: currentRecipe?.ingredients || [],
-    instagramLink: el('result-ig-link').value.trim() || null
-  });
-
-  clearAllImages();
-  el('results').classList.add('hidden');
-  toast('Recipe saved to your collection ✦');
+  try {
+    await persistRecipe({
+      name: toTitleCase(name),
+      ingredients: currentRecipe?.ingredients || [],
+      instagramLink: el('result-ig-link').value.trim() || null
+    });
+    clearAllImages();
+    el('results').classList.add('hidden');
+    toast('Recipe saved to your collection ✦');
+  } catch (err) {
+    console.error(err);
+    toast('Failed to save — please try again');
+  }
 }
 
 async function onManualSave() {
