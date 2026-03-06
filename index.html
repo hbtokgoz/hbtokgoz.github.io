@@ -430,30 +430,12 @@
     }
 
     /* ── INSTRUCTIONS ── */
-    .inst-list, .modal-inst-list {
-      list-style: none;
-      counter-reset: step;
-    }
-    .inst-list li, .modal-inst-list li {
-      counter-increment: step;
-      display: flex;
-      gap: .75rem;
-      padding: .55rem 0;
+    .inst-text, .modal-inst-text {
       font-size: .93rem;
-      line-height: 1.65;
-      border-bottom: 1px solid rgba(26,20,16,.06);
+      line-height: 1.75;
+      white-space: pre-wrap;
+      margin: 0 0 1rem;
     }
-    .inst-list li:last-child, .modal-inst-list li:last-child { border-bottom: none; }
-    .inst-list li::before, .modal-inst-list li::before {
-      content: counter(step);
-      font-family: 'DM Mono', monospace;
-      font-size: .72rem;
-      color: var(--rust);
-      min-width: 22px;
-      flex-shrink: 0;
-      padding-top: .13rem;
-    }
-    .modal-inst-list { margin-bottom: 1rem; }
 
     /* Instagram row inside result-card */
     .ig-row {
@@ -1088,7 +1070,7 @@
           <div id="result-inst-section" class="hidden">
             <hr class="result-rule">
             <div class="result-label" style="margin-bottom:.75rem">Instructions</div>
-            <ol class="inst-list" id="result-instructions"></ol>
+            <p class="inst-text" id="result-instructions"></p>
           </div>
           <div class="ig-row">
             <label class="field-label" for="result-ig-link">Instagram Link <span style="opacity:.45;text-transform:none;letter-spacing:0;font-size:.75rem">(optional)</span></label>
@@ -1159,7 +1141,7 @@
         <ul class="modal-ing-list" id="modal-ing-list"></ul>
         <p class="modal-no-ing hidden" id="modal-no-ing">No ingredients recorded.</p>
         <div class="modal-body-label hidden" id="modal-inst-label" style="margin-top:1.2rem">Instructions</div>
-        <ol class="modal-inst-list hidden" id="modal-inst-list"></ol>
+        <p class="modal-inst-text hidden" id="modal-inst-list"></p>
       </div>
       <div class="modal-foot">
         <button class="btn-del" id="modal-del-btn">Delete Recipe</button>
@@ -1533,20 +1515,17 @@ Return ONLY a valid JSON object — no markdown, no explanation, no code fences.
     "quantity unit ingredient",
     "quantity unit ingredient"
   ],
-  "instructions": [
-    "Step description",
-    "Step description"
-  ]
+  "instructions": "Full instructions text exactly as written in the image"
 }
 
 Rules:
 - Preserve the original language exactly. If the recipe is in Turkish, keep it in Turkish. If in Italian, keep Italian. Do NOT translate anything.
 - Each element in "ingredients" is a single string combining quantity + unit + ingredient name (e.g. "2 cups flour", "1 tsp tuz", "3 yumurta").
 - If no quantity is visible, just write the ingredient name.
-- Each element in "instructions" is one step. Do NOT include the step number in the string itself.
-- If no instructions are visible, use an empty array for "instructions".
+- Copy the instructions text verbatim as a single string. Preserve line breaks using \\n. Do NOT reformat or number steps yourself.
+- If no instructions are visible, use an empty string for "instructions".
 - If multiple recipes appear, extract the most prominent one.
-- If no recipe is found at all, return: {"name":"Unknown Recipe","ingredients":[],"instructions":[]}
+- If no recipe is found at all, return: {"name":"Unknown Recipe","ingredients":[],"instructions":""}
 - Return ONLY the raw JSON object.`
     }
   ];
@@ -1583,7 +1562,8 @@ Rules:
 
   if (!recipe.name) recipe.name = 'Extracted Recipe';
   if (!Array.isArray(recipe.ingredients)) recipe.ingredients = [];
-  if (!Array.isArray(recipe.instructions)) recipe.instructions = [];
+  if (typeof recipe.instructions !== 'string')
+    recipe.instructions = Array.isArray(recipe.instructions) ? recipe.instructions.join('\n') : '';
 
   recipe.name = toTitleCase(recipe.name);
   return recipe;
@@ -1607,9 +1587,9 @@ function showResults(recipe) {
   }
 
   const instSection = el('result-inst-section');
-  if (recipe.instructions?.length) {
+  if (recipe.instructions?.trim()) {
     instSection.classList.remove('hidden');
-    el('result-instructions').innerHTML = recipe.instructions.map(s => `<li>${esc(s)}</li>`).join('');
+    el('result-instructions').textContent = recipe.instructions;
   } else {
     instSection.classList.add('hidden');
   }
@@ -1628,7 +1608,7 @@ async function onSaveExtracted() {
     await persistRecipe({
       name: toTitleCase(name),
       ingredients: currentRecipe?.ingredients || [],
-      instructions: currentRecipe?.instructions || [],
+      instructions: currentRecipe?.instructions || '',
       instagramLink: el('result-ig-link').value.trim() || null
     });
     clearAllImages();
@@ -1753,10 +1733,10 @@ function openRecipeModal(id) {
 
   const instList  = el('modal-inst-list');
   const instLabel = el('modal-inst-label');
-  if (recipe.instructions?.length) {
+  if (recipe.instructions?.trim()) {
     instLabel.classList.remove('hidden');
     instList.classList.remove('hidden');
-    instList.innerHTML = recipe.instructions.map(s => `<li>${esc(s)}</li>`).join('');
+    instList.textContent = recipe.instructions;
   } else {
     instLabel.classList.add('hidden');
     instList.classList.add('hidden');
@@ -1801,7 +1781,7 @@ function mapRow(row) {
     id: row.id,
     name: row.name,
     ingredients: row.ingredients || [],
-    instructions: row.instructions || [],
+    instructions: typeof row.instructions === 'string' ? row.instructions : (Array.isArray(row.instructions) ? row.instructions.join('\n') : ''),
     instagramLink: row.instagram_link,
     dateAdded: row.date_added
   };
