@@ -52,6 +52,8 @@ input,textarea{-webkit-user-select:text;user-select:text}
 
 /* ── LAYOUT ── */
 #app{padding-top:calc(var(--safe-t) + 8px);padding-bottom:calc(84px + var(--safe-b));max-width:640px;margin:0 auto}
+/* Antrenman ekranında üst boşluğu yapışkan başlık kendi taşır – çift saymayı önle. */
+#app.wo{padding-top:0}
 .wrap{padding:0 16px}
 
 .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:6px 16px 14px}
@@ -568,10 +570,12 @@ function ciz(){
 
   if (view === 'workout' && S.active){
     tb.classList.add('hidden');
+    app.classList.add('wo');
     app.innerHTML = cizAntrenman();
   } else {
     if (view === 'workout') view = 'home';
     tb.classList.remove('hidden');
+    app.classList.remove('wo');
     tb.innerHTML = SEKMELER.map(([k,l,i]) =>
       `<button data-tab="${k}" class="${view===k?'on':''}">${svg(i)}<span>${l}</span></button>`
     ).join('');
