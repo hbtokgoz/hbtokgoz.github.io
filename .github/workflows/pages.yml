@@ -9,9 +9,11 @@ permissions:
   pages: write
   id-token: write
 
+# Aynı anda tek dağıtım; ama süren bir dağıtımı ASLA iptal etme — yarıda
+# kesilen Pages dağıtımı siteyi eski sürümde bırakıyor.
 concurrency:
   group: pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   deploy:
@@ -27,3 +29,7 @@ jobs:
           path: '.'
       - uses: actions/deploy-pages@v4
         id: deployment
+        with:
+          # Varsayılan 10 dk yetmiyor: dağıtım "deployment_queued" durumunda
+          # daha uzun bekleyebiliyor ve zaman aşımı onu iptal ediyor.
+          timeout: 1800000
