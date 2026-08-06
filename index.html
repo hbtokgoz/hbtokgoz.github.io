@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 <title>Antrenman</title>
 <meta name="description" content="Kişisel antrenman takip uygulaması">
+<!-- Uygulama tamamen yerel çalışır: dış kaynak yüklemez, ağa hiçbir şey göndermez.
+     connect-src 'none' bunu tarayıcıya da zorlatır — olası bir kod enjeksiyonu
+     bile veriyi dışarı sızdıramaz. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'none'; worker-src 'self'; manifest-src 'self'; object-src 'none'; frame-src 'none'; form-action 'none'; base-uri 'none'">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#0b0d10">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -398,20 +402,110 @@ const varsayilanDurum = () => ({
   active: null
 });
 
+/* ── GÜVENİLMEYEN VERİYİ TEMİZLE ──────────────────────────────────────────
+   Hem yedek dosyası hem de tarayıcı deposu güvenilmez girdidir: dosya dışarıdan
+   gelir, depo aynı origin'deki her betiğe açıktır. Durum buradan geçmeden
+   kullanılmaz — her alanın tipi zorlanır, kimlikler dar bir karakter kümesine
+   sıkıştırılır, boyutlar sınırlanır. Böylece arayüzde üretilen HTML'e ancak
+   zararsız değerler ulaşabilir.                                             */
+
+const KIMLIK_RE = /^[A-Za-z0-9_-]{1,40}$/;
+
+/* Bozuk kimlikleri tutarlı biçimde yenile: program ile geçmiş arasındaki
+   bağ kopmasın diye aynı ham değer hep aynı yeni kimliğe eşlenir. */
+function kimlikHavuzu(){
+  const m = new Map();
+  return ham => {
+    const k = (typeof ham === 'string' || typeof ham === 'number') ? String(ham) : '';
+    if (KIMLIK_RE.test(k)) return k;
+    if (!m.has(k)) m.set(k, uid());
+    return m.get(k);
+  };
+}
+
+function temizleDurum(d){
+  const V = varsayilanDurum();
+  if (!d || typeof d !== 'object') return V;
+
+  const kid = kimlikHavuzu();
+  const yazi = (v, n) => typeof v === 'string'
+    ? v.replace(/[\u0000-\u001f\u007f]/g, '').slice(0, n) : '';
+  const say = v => {
+    const n = typeof v === 'number' ? v : parseFloat(v);
+    return Number.isFinite(n) ? n : null;
+  };
+  /* Yer tutucular yalnızca sayı benzeri metin olabilir. */
+  const yt = v => { const s = yazi(v, 10); return /^[0-9.,–-]*$/.test(s) ? s : '–'; };
+
+  const p = d.program && typeof d.program === 'object' ? d.program : {};
+  const program = {
+    name: yazi(p.name, 80) || V.program.name,
+    days: (Array.isArray(p.days) ? p.days : []).slice(0, 30).map(g => {
+      g = g && typeof g === 'object' ? g : {};
+      return {
+        id: kid(g.id),
+        name: yazi(g.name, 60) || 'Gün',
+        exercises: (Array.isArray(g.exercises) ? g.exercises : []).slice(0, 60).map(e => {
+          e = e && typeof e === 'object' ? e : {};
+          return {
+            id: kid(e.id),
+            name: yazi(e.name, 90) || 'Hareket',
+            targetSets: yazi(e.targetSets, 12) || '3',
+            targetReps: yazi(e.targetReps, 12) || '10-12',
+            note: yazi(e.note, 200),
+            last: say(e.last)
+          };
+        })
+      };
+    })
+  };
+  if (!program.days.length) program.days = V.program.days;
+
+  const seans = s => {
+    s = s && typeof s === 'object' ? s : {};
+    return {
+      id: kid(s.id),
+      dayId: kid(s.dayId),
+      dayName: yazi(s.dayName, 60) || 'Antrenman',
+      date: /^\d{4}-\d{2}-\d{2}$/.test(s.date) ? s.date : bugun(),
+      start: say(s.start) ?? Date.now(),
+      end: say(s.end),
+      exercises: (Array.isArray(s.exercises) ? s.exercises : []).slice(0, 60).map(e => {
+        e = e && typeof e === 'object' ? e : {};
+        return {
+          exId: kid(e.exId),
+          name: yazi(e.name, 90) || 'Hareket',
+          note: yazi(e.note, 200),
+          targetReps: yazi(e.targetReps, 12),
+          sets: (Array.isArray(e.sets) ? e.sets : []).slice(0, 30).map(x => {
+            x = x && typeof x === 'object' ? x : {};
+            return { w: say(x.w), r: say(x.r), done: x.done === true, phW: yt(x.phW), phR: yt(x.phR) };
+          })
+        };
+      })
+    };
+  };
+
+  const ay = d.settings && typeof d.settings === 'object' ? d.settings : {};
+  return {
+    version: 1,
+    settings: {
+      restSec: Math.min(900, Math.max(10, Math.round(say(ay.restSec) ?? V.settings.restSec))),
+      sound:   ay.sound   !== false,
+      vibrate: ay.vibrate !== false
+    },
+    program,
+    sessions: (Array.isArray(d.sessions) ? d.sessions : []).slice(0, 5000).map(seans),
+    active: d.active && typeof d.active === 'object' ? seans(d.active) : null
+  };
+}
+
 let S;
 function yukle(){
   try {
     const raw = localStorage.getItem(KEY);
     if (!raw) return varsayilanDurum();
-    const d = JSON.parse(raw);
-    const base = varsayilanDurum();
-    return {
-      version: 1,
-      settings: Object.assign(base.settings, d.settings || {}),
-      program: d.program && Array.isArray(d.program.days) && d.program.days.length ? d.program : base.program,
-      sessions: Array.isArray(d.sessions) ? d.sessions : [],
-      active: d.active || null
-    };
+    return temizleDurum(JSON.parse(raw));
   } catch(e){
     console.warn('Kayıt okunamadı', e);
     return varsayilanDurum();
@@ -617,7 +711,7 @@ function cizAnasayfa(){
   S.program.days.forEach((d,i) => {
     const son = gunSonYapilma(d.id);
     const yeni = son && gunFarki(son) <= 2;
-    h += `<button class="day ${yeni?'recent':''}" data-act="basla" data-id="${d.id}">
+    h += `<button class="day ${yeni?'recent':''}" data-act="basla" data-id="${esc(d.id)}">
       <span class="idx">${i+1}</span>
       <span class="info"><b>${esc(d.name)}</b><span>${d.exercises.length} hareket${son ? ' · son ' + gecenZaman(son) : ' · hiç yapılmadı'}</span></span>
       <span class="go">›</span></button>`;
@@ -639,7 +733,7 @@ function seansSatiri(s){
   const d = fromIso(s.date);
   const hacim = seansHacmi(s);
   const sure = s.end && s.start ? Math.round((s.end - s.start)/60000) : null;
-  return `<button class="sitem" data-act="seans" data-id="${s.id}">
+  return `<button class="sitem" data-act="seans" data-id="${esc(s.id)}">
     <span class="d"><b class="num">${d.getDate()}</b><span>${AY[d.getMonth()].slice(0,3)}</span></span>
     <span class="i"><b>${esc(s.dayName)}</b><span>${seansSetSayisi(s)} set · ${fmt(hacim)} kg hacim${sure!==null?' · '+sure+' dk':''}</span></span>
     <span class="go" style="color:var(--dim)">›</span></button>`;
@@ -660,7 +754,7 @@ function cizAntrenman(){
     const yapilan = e.sets.filter(s => s.done).length;
 
     h += `<div class="ex ${bitti?'done':''} ${acik?'open':''}">
-      <button class="ex-top" data-act="ac" data-ex="${e.exId}">
+      <button class="ex-top" data-act="ac" data-ex="${esc(e.exId)}">
         <span class="n">${bitti ? '✓' : (i+1)}</span>
         <span class="m"><b>${esc(e.name)}</b><span>${yapilan}/${e.sets.length} set · hedef ${esc(e.targetReps)} tekrar</span></span>
         <span class="chev">▾</span>
@@ -681,16 +775,16 @@ function cizAntrenman(){
       h += `<div class="sets">
         <div class="sethead"><span></span><span>Ağırlık (kg)</span><span>Tekrar</span><span></span></div>`;
       e.sets.forEach((s,j) => {
-        h += `<div class="setrow ${s.done?'on':''}" data-ex="${e.exId}" data-set="${j}">
+        h += `<div class="setrow ${s.done?'on':''}" data-ex="${esc(e.exId)}" data-set="${j}">
           <span class="sn num">${j+1}</span>
-          <input type="text" inputmode="decimal" data-f="w" value="${s.w ?? ''}" placeholder="${s.phW ?? '–'}">
-          <input type="text" inputmode="numeric" data-f="r" value="${s.r ?? ''}" placeholder="${s.phR ?? '–'}">
+          <input type="text" inputmode="decimal" data-f="w" value="${esc(s.w ?? '')}" placeholder="${esc(s.phW ?? '–')}">
+          <input type="text" inputmode="numeric" data-f="r" value="${esc(s.r ?? '')}" placeholder="${esc(s.phR ?? '–')}">
           <button class="tick" data-act="tik">${svg(IK.tik)}</button>
         </div>`;
       });
       h += `</div><div class="setctl">
-        <button data-act="setekle" data-ex="${e.exId}">+ Set ekle</button>
-        ${e.sets.length > 1 ? `<button data-act="setsil" data-ex="${e.exId}">− Set sil</button>` : ''}
+        <button data-act="setekle" data-ex="${esc(e.exId)}">+ Set ekle</button>
+        ${e.sets.length > 1 ? `<button data-act="setsil" data-ex="${esc(e.exId)}">− Set sil</button>` : ''}
       </div></div>`;
     }
     h += `</div>`;
@@ -951,7 +1045,7 @@ function cizIlerleme(){
 
     h += `<section>
       <select class="sel" data-act="ex-sec" style="margin-bottom:12px">
-        ${hareketler.map(x => `<option value="${x.id}" ${x.id===grafikEx?'selected':''}>${esc(x.name)}</option>`).join('')}
+        ${hareketler.map(x => `<option value="${esc(x.id)}" ${x.id===grafikEx?'selected':''}>${esc(x.name)}</option>`).join('')}
       </select>`;
 
     if (nokta.length >= 1){
@@ -1086,23 +1180,23 @@ function cizPlan(){
     h += `<div class="card pday">
       <div class="pday-h">
         <b>${esc(d.name)}</b>
-        <button data-act="gun-ad" data-id="${d.id}">${svg(IK.kalem)}</button>
-        <button data-act="gun-sil" data-id="${d.id}">${svg(IK.cop)}</button>
+        <button data-act="gun-ad" data-id="${esc(d.id)}">${svg(IK.kalem)}</button>
+        <button data-act="gun-sil" data-id="${esc(d.id)}">${svg(IK.cop)}</button>
       </div>`;
     d.exercises.forEach((e, ei) => {
       h += `<div class="pex">
         <span class="ar">
-          <button data-act="tasi" data-id="${e.id}" data-d="-1" ${ei===0?'style="opacity:.25"':''}>▲</button>
-          <button data-act="tasi" data-id="${e.id}" data-d="1" ${ei===d.exercises.length-1?'style="opacity:.25"':''}>▼</button>
+          <button data-act="tasi" data-id="${esc(e.id)}" data-d="-1" ${ei===0?'style="opacity:.25"':''}>▲</button>
+          <button data-act="tasi" data-id="${esc(e.id)}" data-d="1" ${ei===d.exercises.length-1?'style="opacity:.25"':''}>▼</button>
         </span>
-        <span class="m" data-act="ex-duzen" data-id="${e.id}">
+        <span class="m" data-act="ex-duzen" data-id="${esc(e.id)}">
           <b>${esc(e.name)}</b>
           <span>${esc(e.targetSets)} set · ${esc(e.targetReps)} tekrar${e.last !== null ? ' · son ' + fmt(e.last) + ' kg' : ''}</span>
         </span>
-        <button class="iconbtn" style="width:32px;height:32px" data-act="ex-duzen" data-id="${e.id}">${svg(IK.kalem)}</button>
+        <button class="iconbtn" style="width:32px;height:32px" data-act="ex-duzen" data-id="${esc(e.id)}">${svg(IK.kalem)}</button>
       </div>`;
     });
-    h += `<button class="addex" data-act="ex-ekle" data-id="${d.id}">+ Hareket ekle</button></div>`;
+    h += `<button class="addex" data-act="ex-ekle" data-id="${esc(d.id)}">+ Hareket ekle</button></div>`;
   });
 
   h += `<button class="btn ghost" data-act="gun-ekle" style="margin-top:6px">+ Antrenman günü ekle</button></div>`;
@@ -1128,9 +1222,9 @@ function exDuzenAc(exId){
       <div class="field"><label>Hedef tekrar</label><input id="fReps" value="${esc(e.targetReps)}"></div>
     </div>
     <div class="field"><label>Not</label><textarea id="fNote" placeholder="İsteğe bağlı">${esc(e.note)}</textarea></div>
-    <div class="field"><label>Başlangıç ağırlığı (kg)</label><input id="fLast" inputmode="decimal" value="${e.last ?? ''}" placeholder="boş bırakılabilir"></div>
-    <button class="btn primary" data-act="ex-kaydet" data-id="${e.id}">Kaydet</button>
-    <button class="btn danger" data-act="ex-sil" data-id="${e.id}" style="margin-top:10px">Hareketi Sil</button>`);
+    <div class="field"><label>Başlangıç ağırlığı (kg)</label><input id="fLast" inputmode="decimal" value="${esc(e.last ?? '')}" placeholder="boş bırakılabilir"></div>
+    <button class="btn primary" data-act="ex-kaydet" data-id="${esc(e.id)}">Kaydet</button>
+    <button class="btn danger" data-act="ex-sil" data-id="${esc(e.id)}" style="margin-top:10px">Hareketi Sil</button>`);
 }
 
 /* ═══════════════ AYARLAR ═══════════════ */
@@ -1163,10 +1257,10 @@ function ayarlarAc(){
     rd.onload = () => {
       try {
         const d = JSON.parse(rd.result);
-        if (!d || !d.program || !Array.isArray(d.sessions)) throw new Error('format');
-        S = { version:1,
-              settings: Object.assign(varsayilanDurum().settings, d.settings||{}),
-              program: d.program, sessions: d.sessions, active: d.active || null };
+        if (!d || typeof d !== 'object' || !d.program || !Array.isArray(d.sessions))
+          throw new Error('format');
+        /* Dosya dışarıdan geliyor – doğrudan kullanma, temizleyiciden geçir. */
+        S = temizleDurum(d);
         kaydet(); sheetKapat(); git('home');
         toast(`${S.sessions.length} antrenman geri yüklendi`);
       } catch(e){ toast('Dosya okunamadı'); }
@@ -1205,7 +1299,7 @@ function seansAc(id){
     h += `<div class="detx"><b>${esc(e.name)}</b><div class="ss">
       ${setler.map(x => `<span>${fmt(x.w)} kg × ${x.r}</span>`).join('')}</div></div>`;
   });
-  h += `</div><button class="btn danger" data-act="seans-sil" data-id="${s.id}" style="margin-top:20px">Bu Kaydı Sil</button>`;
+  h += `</div><button class="btn danger" data-act="seans-sil" data-id="${esc(s.id)}" style="margin-top:20px">Bu Kaydı Sil</button>`;
   sheetAc(h);
 }
 
@@ -1236,7 +1330,7 @@ document.addEventListener('click', ev => {
             <b style="color:var(--text)">${esc(S.active.dayName)}</b> antrenmanı hâlâ açık.
             Yeni bir antrenman başlatırsan kaydedilmemiş setler silinir.</p>
           <button class="btn primary" data-act="devam">Devam Edene Dön</button>
-          <button class="btn danger" data-act="yeni-zorla" data-id="${id}" style="margin-top:10px">Yine de ${esc(d?d.name:'')} Başlat</button>`);
+          <button class="btn danger" data-act="yeni-zorla" data-id="${esc(id)}" style="margin-top:10px">Yine de ${esc(d?d.name:'')} Başlat</button>`);
       } else antrenmanBasla(id);
       break;
     }
@@ -1374,7 +1468,7 @@ document.addEventListener('click', ev => {
         <p style="color:var(--muted);font-size:14px;margin-bottom:18px;line-height:1.5">
           Bu gün ve içindeki ${d.exercises.length} hareket programdan çıkarılacak.
           Geçmiş antrenman kayıtların silinmez.</p>
-        <button class="btn danger" data-act="gun-sil-onay" data-id="${d.id}">Evet, Sil</button>
+        <button class="btn danger" data-act="gun-sil-onay" data-id="${esc(d.id)}">Evet, Sil</button>
         <button class="btn ghost" data-act="kapat" style="margin-top:10px">Vazgeç</button>`);
       break;
     }
